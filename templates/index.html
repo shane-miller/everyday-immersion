@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Everyday Immersion - Language Learning</title>
+    
+    <!-- External stylesheets and fonts -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Application header with title and model status -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="title">
+                    <i class="fas fa-globe"></i>
+                    Everyday Immersion
+                </h1>
+                <p class="subtitle">Learn languages through natural conversation</p>
+            </div>
+            <div class="model-status" id="modelStatus">
+                <span class="status-indicator loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    Loading model...
+                </span>
+            </div>
+        </header>
+
+        <!-- Main chat interface container -->
+        <main class="chat-container">
+            <!-- Chat messages display area -->
+            <div class="chat-messages" id="chatMessages">
+                <!-- Chat messages will be dynamically added here -->
+            </div>
+            
+            <!-- Welcome screen - shown before session begins -->
+            <div class="begin-session-container" id="beginSessionContainer">
+                <div class="begin-session-content">
+                    <h2>Ready to Start Learning?</h2>
+                    <p>Click the button below to begin your inductive language learning session.</p>
+                    <button id="beginSessionButton" class="begin-session-button">
+                        <i class="fas fa-play"></i>
+                        Begin Learning Session
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chat input interface -->
+            <div class="chat-input-container">
+                <form id="chatForm" class="chat-form">
+                    <div class="input-wrapper">
+                        <textarea 
+                            id="messageInput" 
+                            placeholder="Type your message here..."
+                            rows="1"
+                            maxlength="500"
+                        ></textarea>
+                        <button type="submit" id="sendButton" class="send-button">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Input footer with character count and language selection -->
+                <div class="input-footer">
+                    <span class="char-count" id="charCount">0/500</span>
+                    <div class="language-selector">
+                        <div class="language-group">
+                            <label for="preferredLanguageSelect">I speak:</label>
+                            <select id="preferredLanguageSelect">
+                                <option value="english">English</option>
+                            </select>
+                        </div>
+                        <div class="language-group">
+                            <label for="learningLanguageSelect">I want to learn:</label>
+                            <select id="learningLanguageSelect">
+                                <option value="japanese">Japanese</option>
+                                <option value="korean">Korean</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript application script -->
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+</body>
+</html> 
