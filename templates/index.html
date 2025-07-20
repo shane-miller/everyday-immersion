@@ -12,20 +12,36 @@
 </head>
 <body>
     <div class="container">
-        <!-- Application header with title and model status -->
+        <!-- Application header with title and model selection -->
         <header class="header">
             <div class="header-content">
                 <h1 class="title">
                     <i class="fas fa-globe"></i>
                     Everyday Immersion
                 </h1>
-                <p class="subtitle">Learn languages through natural conversation</p>
+                <p class="subtitle">Learn languages naturally, the inductive way</p>
             </div>
-            <div class="model-status" id="modelStatus">
-                <span class="status-indicator loading">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    Loading model...
-                </span>
+            <div class="model-selection" id="modelSelection">
+                <div class="model-selector">
+                    <label for="modelSelect">Select Model:</label>
+                    <select id="modelSelect" class="model-dropdown">
+                        <option value="">Choose a model...</option>
+                    </select>
+                    <button id="loadModelButton" class="load-model-button" disabled>
+                        <i class="fas fa-download"></i>
+                        Load Selected Model
+                    </button>
+                    <button id="resetButton" class="reset-button" style="display: none;">
+                        <i class="fas fa-undo"></i>
+                        Reset Session
+                    </button>
+                </div>
+                <div class="model-status" id="modelStatus">
+                    <span class="status-indicator not-loaded">
+                        <i class="fas fa-info-circle"></i>
+                        No model loaded
+                    </span>
+                </div>
             </div>
         </header>
 
@@ -40,8 +56,27 @@
             <div class="begin-session-container" id="beginSessionContainer">
                 <div class="begin-session-content">
                     <h2>Ready to Start Learning?</h2>
-                    <p>Click the button below to begin your inductive language learning session.</p>
-                    <button id="beginSessionButton" class="begin-session-button">
+                    <p>First, select and load a model above, then configure your language preferences below.</p>
+                    
+                    <!-- Language selection section -->
+                    <div class="language-setup">
+                        <div class="language-group">
+                            <label for="preferredLanguageSelect">I speak:</label>
+                            <select id="preferredLanguageSelect" autocomplete="off">
+                                <option value="">Choose your language...</option>
+                                <option value="english">English</option>
+                            </select>
+                        </div>
+                        <div class="language-group">
+                            <label for="learningLanguageSelect">I want to learn:</label>
+                            <select id="learningLanguageSelect" autocomplete="off">
+                                <option value="">Choose target language...</option>
+                                <option value="japanese">Japanese</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button id="beginSessionButton" class="begin-session-button" disabled>
                         <i class="fas fa-play"></i>
                         Begin Learning Session
                     </button>
@@ -64,24 +99,9 @@
                     </div>
                 </form>
                 
-                <!-- Input footer with character count and language selection -->
+                <!-- Input footer with character count -->
                 <div class="input-footer">
                     <span class="char-count" id="charCount">0/500</span>
-                    <div class="language-selector">
-                        <div class="language-group">
-                            <label for="preferredLanguageSelect">I speak:</label>
-                            <select id="preferredLanguageSelect">
-                                <option value="english">English</option>
-                            </select>
-                        </div>
-                        <div class="language-group">
-                            <label for="learningLanguageSelect">I want to learn:</label>
-                            <select id="learningLanguageSelect">
-                                <option value="japanese">Japanese</option>
-                                <option value="korean">Korean</option>
-                            </select>
-                        </div>
-                    </div>
                 </div>
             </div>
         </main>

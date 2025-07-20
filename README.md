@@ -9,7 +9,7 @@ Everyday Immersion is an AI-powered language learning application that uses indu
 ## Features
 
 - **Inductive Learning**: Learn languages through pattern recognition and discovery rather than rote memorization
-- **Multi-language Support**: Currently supports Japanese and Korean learning
+- **Multi-language Support**: Currently supports English speakers learning Japanese (additional language pairs planned for future releases)
 - **Adaptive Difficulty**: The AI adjusts complexity based on your proficiency level
 - **Natural Conversation**: Practice real-world language use through interactive chat
 - **Contextual Learning**: Learn grammar and vocabulary in meaningful contexts
@@ -17,12 +17,12 @@ Everyday Immersion is an AI-powered language learning application that uses indu
 
 ## Supported Languages
 
-### Learning Languages
-- **Japanese**: Complete support with hiragana, katakana, kanji, and JLPT-level guidance
-- **Korean**: Full support with hangul, honorifics, and TOPIK-level guidance
+### Current Language Pair
+- **English → Japanese**: Complete support with hiragana, katakana, kanji, and JLPT-level guidance
 
-### Interface Languages
-- **English**: Primary interface language
+### Future Language Support
+- Additional language pairs will be added in future releases
+- Planned support for other native languages and target languages
 
 ## System Requirements
 
@@ -93,8 +93,8 @@ Everyday Immersion is an AI-powered language learning application that uses indu
 1. **Wait for model loading**: The AI model will load automatically on first run (this may take several minutes)
 
 2. **Select your languages**:
-   - Choose your preferred language (currently English)
-   - Select the language you want to learn (Japanese or Korean)
+   - Currently supports English speakers learning Japanese
+   - Language selection is automatically configured for English → Japanese
 
 3. **Start learning**:
    - Click "Begin Learning Session" to start

@@ -17,11 +17,17 @@ class ChatApp {
         this.learningLanguageSelect = document.getElementById('learningLanguageSelect');
         this.beginSessionContainer = document.getElementById('beginSessionContainer');
         this.beginSessionButton = document.getElementById('beginSessionButton');
+        this.modelSelect = document.getElementById('modelSelect');
+        this.loadModelButton = document.getElementById('loadModelButton');
+        this.resetButton = document.getElementById('resetButton');
         
         // Application state variables
         this.isLoading = false;
         this.modelReady = false;
         this.sessionStarted = false;
+        this.sessionId = this.generateSessionId();
+        this.availableModels = {};
+        this.currentModel = null;
         
         this.init();
     }
@@ -29,8 +35,9 @@ class ChatApp {
     init() {
         // Initialize the chat application
         this.setupEventListeners();
-        this.checkModelStatus();
+        this.loadAvailableModels();
         this.autoResizeTextarea();
+        this.updateBeginSessionButtonState();
         
         // Hide chat interface until session begins
         this.chatForm.parentElement.style.display = 'none';
@@ -41,6 +48,19 @@ class ChatApp {
         // Begin session button click handler
         this.beginSessionButton.addEventListener('click', () => {
             this.beginSession();
+        });
+        
+        // Model selection handlers
+        this.modelSelect.addEventListener('change', () => {
+            this.updateLoadButtonState();
+        });
+        
+        this.loadModelButton.addEventListener('click', () => {
+            this.loadSelectedModel();
+        });
+        
+        this.resetButton.addEventListener('click', () => {
+            this.resetSession();
         });
         
         // Form submission handler
@@ -66,70 +86,146 @@ class ChatApp {
         // Language selection change handlers
         this.preferredLanguageSelect.addEventListener('change', () => {
             this.updateLanguageContext();
+            this.updateBeginSessionButtonState();
         });
         
         this.learningLanguageSelect.addEventListener('change', () => {
             this.updateLanguageContext();
+            this.updateBeginSessionButtonState();
         });
     }
     
-    async checkModelStatus() {
+    async loadAvailableModels() {
         /**
-         * Check the current status of the language model via API call.
-         * 
-         * This method polls the server to determine if the model is ready,
-         * still loading, or encountered an error during initialization.
+         * Load available models from the server and populate the dropdown.
          */
         try {
-            const response = await fetch('/status');
+            const response = await fetch('/models');
             const data = await response.json();
             
-            if (data.model_loaded) {
-                this.modelReady = true;
-                this.updateModelStatus('ready', data.message || 'Model ready');
-            } else if (data.status === 'loading') {
-                this.updateModelStatus('loading', data.message || 'Loading model...');
-                // Retry status check after 2 seconds
-                setTimeout(() => this.checkModelStatus(), 2000);
-            } else {
-                this.updateModelStatus('error', data.message || 'Model error');
-                // Retry status check after 5 seconds on error
-                setTimeout(() => this.checkModelStatus(), 5000);
-            }
+            this.availableModels = data.models;
+            this.currentModel = data.current_model;
+            
+            this.populateModelDropdown();
+            this.updateModelStatus();
         } catch (error) {
-            console.error('Error checking model status:', error);
-            this.updateModelStatus('error', 'Connection error');
-            // Retry status check after 5 seconds on connection error
-            setTimeout(() => this.checkModelStatus(), 5000);
+            console.error('Error loading models:', error);
+            this.updateModelStatus('error', 'Failed to load models');
         }
     }
     
-    updateModelStatus(status, message) {
+    populateModelDropdown() {
+        /**
+         * Populate the model selection dropdown with available models.
+         */
+        this.modelSelect.innerHTML = '<option value="">Choose a model...</option>';
+        
+        Object.entries(this.availableModels).forEach(([key, model]) => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = model.name;
+            option.title = model.description;
+            this.modelSelect.appendChild(option);
+        });
+        
+        // Set current model if one is loaded
+        if (this.currentModel) {
+            this.modelSelect.value = this.currentModel;
+            this.modelReady = true;
+        }
+        
+        this.updateLoadButtonState();
+        this.updateBeginSessionButtonState();
+    }
+    
+    updateLoadButtonState() {
+        /**
+         * Update the load button state based on model selection.
+         */
+        const selectedModel = this.modelSelect.value;
+        this.loadModelButton.disabled = !selectedModel || this.isLoading;
+    }
+    
+    updateBeginSessionButtonState() {
+        /**
+         * Update the begin session button state based on model readiness and language selection.
+         */
+        const preferredLanguage = this.preferredLanguageSelect.value;
+        const learningLanguage = this.learningLanguageSelect.value;
+        const languagesSelected = preferredLanguage && learningLanguage;
+        
+        this.beginSessionButton.disabled = !this.modelReady || !languagesSelected || this.isLoading;
+    }
+    
+    async loadSelectedModel() {
+        /**
+         * Load the selected model from the dropdown.
+         */
+        const selectedModel = this.modelSelect.value;
+        if (!selectedModel) return;
+        
+        this.setLoading(true);
+        this.updateModelStatus('loading', 'Loading model...');
+        
+        try {
+            const response = await fetch('/load-model', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    model_key: selectedModel
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                this.modelReady = true;
+                this.currentModel = selectedModel;
+                this.updateModelStatus('ready', `Model ${this.availableModels[selectedModel].name} ready`);
+                this.updateBeginSessionButtonState();
+            } else {
+                throw new Error(data.error || 'Failed to load model');
+            }
+        } catch (error) {
+            console.error('Error loading model:', error);
+            this.updateModelStatus('error', `Failed to load model: ${error.message}`);
+        } finally {
+            this.setLoading(false);
+            this.updateLoadButtonState();
+        }
+    }
+    
+    updateModelStatus(status = null, message = null) {
         /**
          * Update the visual model status indicator in the UI.
          * 
          * Args:
-         *     status (string): Status type ('ready', 'loading', 'error')
+         *     status (string): Status type ('ready', 'loading', 'error', 'not-loaded')
          *     message (string): Status message to display
          */
         const statusIndicator = this.modelStatus.querySelector('.status-indicator');
-        statusIndicator.className = `status-indicator ${status}`;
+        
+        if (status) {
+            statusIndicator.className = `status-indicator ${status}`;
+        }
         
         const icon = statusIndicator.querySelector('i');
         if (status === 'ready') {
             icon.className = 'fas fa-check';
-            // Enable begin session button when model is ready
-            this.beginSessionButton.disabled = false;
         } else if (status === 'error') {
             icon.className = 'fas fa-exclamation-triangle';
-            this.beginSessionButton.disabled = true;
         } else if (status === 'loading') {
             icon.className = 'fas fa-spinner fa-spin';
-            this.beginSessionButton.disabled = true;
+        } else if (status === 'not-loaded') {
+            icon.className = 'fas fa-info-circle';
         }
         
-        statusIndicator.textContent = message;
-        statusIndicator.appendChild(icon);
+        if (message) {
+            statusIndicator.textContent = message;
+            statusIndicator.appendChild(icon);
+        }
     }
     
     async beginSession() {
@@ -148,8 +244,12 @@ class ChatApp {
         this.chatForm.parentElement.style.display = 'block';
         this.chatMessages.style.display = 'block';
         
-        // Send initial session start message
-        await this.sendMessage('Begin learning session.', true);
+        // Show the reset button
+        this.resetButton.style.display = 'flex';
+        
+        // Send initial session start message with language context
+        const languageContext = `Begin learning session. I speak ${this.preferredLanguageSelect.value} and want to learn ${this.learningLanguageSelect.value}.`;
+        await this.sendMessage(languageContext, true);
         
         this.sessionStarted = true;
     }
@@ -187,8 +287,7 @@ class ChatApp {
                 },
                 body: JSON.stringify({
                     message: messageText,
-                    preferredLanguage: this.preferredLanguageSelect.value,
-                    learningLanguage: this.learningLanguageSelect.value
+                    sessionId: this.sessionId
                 })
             });
             
@@ -299,6 +398,8 @@ class ChatApp {
         this.isLoading = loading;
         this.sendButton.disabled = loading;
         this.messageInput.disabled = loading;
+        this.updateLoadButtonState();
+        this.updateBeginSessionButtonState();
     }
     
     updateCharCount() {
@@ -340,6 +441,16 @@ class ChatApp {
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
     }
     
+    generateSessionId() {
+        /**
+         * Generate a unique session identifier.
+         * 
+         * Returns:
+         *     string: Unique session ID
+         */
+        return 'session_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
+    }
+    
     updateLanguageContext() {
         /**
          * Update the language learning context when language selections change.
@@ -350,6 +461,71 @@ class ChatApp {
         const learningLanguage = this.learningLanguageSelect.value;
         
         console.log(`Language context: ${preferredLanguage} speaker learning ${learningLanguage}`);
+    }
+    
+    async resetSession() {
+        /**
+         * Reset the current session and return to the initial state.
+         * 
+         * This method clears the conversation history, resets the session state,
+         * and returns the user to the model and language selection screen.
+         */
+        if (this.isLoading) return;
+        
+        try {
+            // Call the reset endpoint
+            const response = await fetch('/reset', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    sessionId: this.sessionId
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                // Clear chat messages
+                this.chatMessages.innerHTML = '';
+                
+                // Reset session state
+                this.sessionStarted = false;
+                this.sessionId = this.generateSessionId();
+                
+                // Reset model state since it was unloaded
+                this.modelReady = false;
+                this.currentModel = null;
+                
+                // Reset model selection dropdown
+                this.modelSelect.value = '';
+                
+                // Update model status to show no model loaded
+                this.updateModelStatus('not-loaded', 'No model loaded');
+                
+                // Show the welcome screen again
+                this.beginSessionContainer.style.display = 'flex';
+                
+                // Hide the chat interface
+                this.chatForm.parentElement.style.display = 'none';
+                this.chatMessages.style.display = 'none';
+                
+                // Hide the reset button
+                this.resetButton.style.display = 'none';
+                
+                // Update button states
+                this.updateLoadButtonState();
+                this.updateBeginSessionButtonState();
+                
+                console.log('Session reset successfully - model unloaded');
+            } else {
+                throw new Error(data.error || 'Failed to reset session');
+            }
+        } catch (error) {
+            console.error('Error resetting session:', error);
+            alert('Failed to reset session. Please try again.');
+        }
     }
 }
 
